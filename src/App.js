@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import useSound from "use-sound";
+import TimerForm from "./components/TimerForm";
+import TimerView from "./components/TimerView";
 import notify from "./sounds/notify.mp3";
 
 function App() {
   const [phase, setPhase] = useState(0);
-  const [arrOfPhase, setArrOfPhase] = useState([])
+  const [arrOfPhase, setArrOfPhase] = useState([]);
   const [isTimerOn, setTimerOn] = useState(false);
 
   const firstMinutesRef = useRef();
@@ -12,31 +14,20 @@ function App() {
   const secondMinutesRef = useRef();
   const secondSecondsRef = useRef();
   const iterCountRef = useRef();
-  
+
   const [notifySound] = useSound(notify);
 
-   
-
-
-
   useEffect(() => {
-    if (phase > 0) {
-      const timeout = setTimeout(
-        () => setPhase((phase) => phase - 1),
-        1000
-      );
+    if (phase > 0 && isTimerOn) {
+      const timeout = setTimeout(() => setPhase((phase) => phase - 1), 1000);
       return () => clearTimeout(timeout);
-    } 
-    if(phase === 0 && isTimerOn){
-      if(arrOfPhase.length > 0){
-        console.log(arrOfPhase.length);
+    }
+    if (phase === 0 && isTimerOn) {
+      if (arrOfPhase.length > 0) {
         const [phase, ...rest] = arrOfPhase;
-        console.log(`phase = ${phase}`)
-        console.log(`rest = ${rest}`)
-
         setPhase(phase);
         setArrOfPhase(rest);
-      }else{
+      } else {
         setTimerOn(false);
       }
       notifySound();
@@ -45,70 +36,51 @@ function App() {
 
   const handeleSubmitForm = (event) => {
     event.preventDefault();
-    console.log(firstMinutesRef.current.value);
-    console.log(firstSecondsRef.current.value);
-    // setPhase(firstSecondsRef.current.value);
-    console.log(secondMinutesRef.current.value);
-    console.log(secondSecondsRef.current.value);
-    const arr = [];
-    for (let i = 0; i < iterCountRef.current.value; i++){
-      arr.push(parseInt(firstSecondsRef.current.value))
-      arr.push(parseInt(secondSecondsRef.current.value));
-    }
-    setArrOfPhase([...arrOfPhase, ...arr])
-    setTimerOn(true);
+    if (isTimerOn) {
+      setTimerOn(false);
+    } else {
+      if (arrOfPhase.length === 0) {
+        const firstSecondsTotal =
+          parseInt(firstMinutesRef.current.value * 60) +
+          parseInt(firstSecondsRef.current.value * 1);
+        const secondSecondsTotal =
+          parseInt(secondMinutesRef.current.value * 60) +
+          parseInt(secondSecondsRef.current.value * 1);
+        const arr = [];
+        for (let i = 0; i < iterCountRef.current.value; i++) {
+          firstSecondsTotal && arr.push(firstSecondsTotal);
+          secondSecondsTotal && arr.push(secondSecondsTotal);
+        }
 
+        setArrOfPhase([...arrOfPhase, ...arr]);
+      }
+      setTimerOn(true);
+    }
+  };
+
+  const handelResetClick = () => {
+    setPhase(0);
+    setArrOfPhase([]);
+    setTimerOn(false);
   };
 
   return (
     <>
       <h1>Timer</h1>
-
-      <form onSubmit={handeleSubmitForm}>
-        <div>
-          <label htmlFor="firstMinutes">Minutes in first phase:</label>
-          <input
-            ref={firstMinutesRef}
-            type="number"
-            name="firstMinutes"
-            id="firstMinutes"
-          />
-          <label htmlFor="firstSeconds">Seconds in first phase:</label>
-          <input
-            ref={firstSecondsRef}
-            type="number"
-            name="firstSecondfirstSeconds"
-            id="firstSeconds"
-          />
-        </div>
-        <div>
-          <label htmlFor="secondMinutes">Minutes in second phase:</label>
-          <input
-            ref={secondMinutesRef}
-            type="number"
-            name="secondMinutes"
-            id="secondMinutes"
-          />
-          <label htmlFor="secondSeconds">Seconds in second phase:</label>
-          <input
-            ref={secondSecondsRef}
-            type="number"
-            name="secondSeconds"
-            id="secondSeconds"
-          />
-        </div>
-        <div>
-        <label htmlFor="iterCount">How many iterations:</label>
-          <input
-            ref={iterCountRef}
-            type="number"
-            name="iterCount"
-            id="iterCount"
-          />
-        </div>
-        <input type="submit" value="Start" />
-      </form>
-      <h2>Time: {phase}</h2>
+      <p>You can set only one phase.</p>
+      <TimerForm
+        onSubmitForm={handeleSubmitForm}
+        isTimerOn={isTimerOn}
+        refArr={[
+          firstMinutesRef,
+          firstSecondsRef,
+          secondMinutesRef,
+          secondSecondsRef,
+          iterCountRef,
+        ]}
+      />
+      <button onClick={() => handelResetClick()}>Reset</button>
+      <TimerView count={arrOfPhase.length} time={phase} />
     </>
   );
 }
