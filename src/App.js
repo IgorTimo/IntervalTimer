@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import useSound from "use-sound";
+import { chooseSound } from "./components/chooseSound";
+import SoundSettings from "./components/SoundSettings";
 import TimerForm from "./components/TimerForm";
 import TimerView from "./components/TimerView";
-import notify from "./sounds/notify.mp3";
 
 function App() {
   const [phase, setPhase] = useState(0);
   const [arrOfPhase, setArrOfPhase] = useState([]);
   const [isTimerOn, setTimerOn] = useState(false);
+  const [sound, setSound] = useState("notify");
+  const [loudness, setLoudness] = useState(0.2);
 
   const firstMinutesRef = useRef();
   const firstSecondsRef = useRef();
@@ -15,7 +18,7 @@ function App() {
   const secondSecondsRef = useRef();
   const iterCountRef = useRef();
 
-  const [notifySound] = useSound(notify);
+  const [notifySound] = useSound(chooseSound(sound), { volume: loudness });
 
   useEffect(() => {
     if (phase > 0 && isTimerOn) {
@@ -51,7 +54,6 @@ function App() {
           firstSecondsTotal && arr.push(firstSecondsTotal);
           secondSecondsTotal && arr.push(secondSecondsTotal);
         }
-
         setArrOfPhase([...arrOfPhase, ...arr]);
       }
       setTimerOn(true);
@@ -62,6 +64,16 @@ function App() {
     setPhase(0);
     setArrOfPhase([]);
     setTimerOn(false);
+  };
+
+  const handelSelectSound = (event) => {
+    setSound(event.target.value);
+    notifySound();
+  };
+
+  const handelVolumeChange = (event) => {
+    setLoudness(event.target.value);
+    notifySound();
   };
 
   return (
@@ -81,6 +93,11 @@ function App() {
       />
       <button onClick={() => handelResetClick()}>Reset</button>
       <TimerView count={arrOfPhase.length} time={phase} />
+      <SoundSettings
+        onSelectSound={handelSelectSound}
+        onVolumeChange={handelVolumeChange}
+        loudness={loudness}
+      />
     </>
   );
 }
